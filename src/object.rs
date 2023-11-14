@@ -1,6 +1,7 @@
 use crate::*;
 use std::fmt;
 use std::marker::PhantomData;
+use crate::Promise;
 
 #[derive(Clone)]
 pub struct Object {
@@ -115,6 +116,27 @@ impl Object {
     {
         let keys = self.keys(include_inherited)?;
         Ok(Properties { object: self, keys, index: 0, _phantom: PhantomData })
+    }
+
+    pub fn is_promise(&self) -> bool {
+        self.mv8.try_catch(|scope| {
+            let local_object = v8::Local::new(scope, self.handle.clone());
+            let local_value: v8::Local<v8::Value> = local_object.into();
+            local_value.is_promise()
+        })
+    }
+
+    pub fn as_promise(&self) -> Option<Promise> {
+        self.mv8.try_catch(|scope| {
+            let local_object = v8::Local::new(scope, self.handle.clone());
+            let local_value: v8::Local<v8::Value> = local_object.into();
+            let promise = v8::Local::<v8::Promise>::try_from(local_value);
+
+            match promise {
+                Ok(p) => Some(Promise { mv8: self.mv8.clone(), handle: v8::Global::new(scope, p) }),
+                Err(_) => None,
+            }
+        })
     }
 }
 

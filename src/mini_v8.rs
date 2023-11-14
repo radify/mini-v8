@@ -21,6 +21,12 @@ impl MiniV8 {
         MiniV8 { interface: Interface::new(isolate) }
     }
 
+    pub fn flush_tasks(&mut self) -> () {
+        self.interface.top(|scope| {
+            scope.flush_tasks()
+        })
+    }
+
     /// Returns the global JavaScript object.
     pub fn global(&self) -> Object {
         self.scope(|scope| {
@@ -384,6 +390,16 @@ impl InterfaceEntry {
             InterfaceEntry::HandleScope(ref ptr) => {
                 let scope: &mut v8::HandleScope = unsafe { &mut **ptr };
                 scope.thread_safe_handle()
+            },
+        }
+    }
+
+    fn flush_tasks(&mut self) -> () {
+        match self {
+            InterfaceEntry::Isolate(ref mut isolate) => isolate.perform_microtask_checkpoint(),
+            InterfaceEntry::HandleScope(ref ptr) => {
+                let scope: &mut v8::HandleScope = unsafe { &mut **ptr };
+                scope.perform_microtask_checkpoint()
             },
         }
     }

@@ -9,6 +9,7 @@ mod object;
 mod string;
 #[cfg(test)] mod tests;
 mod value;
+mod promise;
 
 pub use crate::array::*;
 pub use crate::error::*;
@@ -17,3 +18,4 @@ pub use crate::mini_v8::*;
 pub use crate::object::*;
 pub use crate::string::*;
 pub use crate::value::*;
+pub use crate::promise::*;
